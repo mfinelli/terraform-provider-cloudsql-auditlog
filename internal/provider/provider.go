@@ -5,11 +5,15 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	"database/sql"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -30,12 +34,14 @@ type ScaffoldingProvider struct {
 }
 
 // ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
+type cloudsqlAuditlogProviderModel struct {
 	Endpoint types.String `tfsdk:"endpoint"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
 }
 
 func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
+	resp.TypeName = "cloudsql-auditlog"
 	resp.Version = p.version
 }
 
@@ -43,15 +49,24 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+				Required: true,
+				Optional:            false,
+			},
+			"username": schema.StringAttribute{
+				Required: true,
+				Optional: false,
+			},
+			"password": schema.StringAttribute{
+				Required: true,
+				Optional: false,
+				Sensitive: true,
 			},
 		},
 	}
 }
 
 func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+	var data cloudsqlAuditlogProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -61,11 +76,91 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 
 	// Configuration values are now available.
 	// if data.Endpoint.IsNull() { /* ... */ }
+	if data.Endpoint.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("endpoint"),
+			"Unknown endpoint",
+			"Must set mysql endpoint",
+		)
+	}
+
+	if data.Username.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Unknown username",
+			"Must set mysql username",
+		)
+	}
+
+	if data.Password.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Unknown password",
+			"Must set mysql password",
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	endpoint := ""
+	username := ""
+	password := ""
+
+	if !data.Endpoint.IsNull() {
+		endpoint = data.Endpoint.ValueString()
+	}
+
+	if !data.Username.IsNull() {
+		username = data.Username.ValueString()
+	}
+
+	if ! data.Password.IsNull() {
+		password = data.Password.ValueString()
+	}
+
+	if endpoint == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("endpoint"),
+			"Missing mysql endpoint",
+			"Must set mysql endpoint",
+		)
+	}
+
+	if username == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Missing mysql username",
+			"Must set mysql username",
+		)
+	}
+
+	if password == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Missing mysql password",
+			"Must set mysql password",
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Example client configuration for data sources and resources
-	client := http.DefaultClient
-	resp.DataSourceData = client
-	resp.ResourceData = client
+	// client := http.DefaultClient
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)", username, password, endpoint)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"unable to open mysql",
+			"Unable to call sql.open",
+		)
+		return
+	}
+	resp.DataSourceData = db
+	resp.ResourceData = db
 }
 
 func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
