@@ -57,8 +57,8 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 				Optional: false,
 			},
 			"password": schema.StringAttribute{
-				Required: true,
-				Optional: false,
+				Required: false,
+				Optional: true,
 				Sensitive: true,
 			},
 		},
@@ -136,13 +136,13 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
-	if password == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("password"),
-			"Missing mysql password",
-			"Must set mysql password",
-		)
-	}
+	// if password == "" {
+	// 	resp.Diagnostics.AddAttributeError(
+	// 		path.Root("password"),
+	// 		"Missing mysql password",
+	// 		"Must set mysql password",
+	// 	)
+	// }
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -150,11 +150,11 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 
 	// Example client configuration for data sources and resources
 	// client := http.DefaultClient
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)", username, password, endpoint)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, password, endpoint)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"unable to open mysql",
+			fmt.Sprintf("unable to open mysql: %v", err),
 			"Unable to call sql.open",
 		)
 		return
@@ -177,7 +177,7 @@ func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() e
 
 func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewExampleDataSource,
+		NewCoffeesDataSource,
 	}
 }
 

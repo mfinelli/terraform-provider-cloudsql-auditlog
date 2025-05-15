@@ -7,9 +7,9 @@ terraform {
 }
 
 provider "cloudsql-auditlog" {
-  endpoint = "test"
-  password = "testp"
-  username = "testu"
+  endpoint = "127.0.0.1"
+  password = ""
+  username = "mario.finelli"
 }
 
 data "cloudsql-auditlog_coffees" "example" {}
