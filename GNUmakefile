@@ -1,6 +1,7 @@
 default: fmt lint install generate
 
 build:
+	sqlc generate
 	go build -v ./...
 
 install: build

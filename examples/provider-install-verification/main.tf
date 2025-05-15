@@ -12,4 +12,8 @@ provider "cloudsql-auditlog" {
   username = "mario.finelli"
 }
 
-data "cloudsql-auditlog_coffees" "example" {}
+data "cloudsql-auditlog_audit_log_rules" "example" {}
+
+output "test" {
+  value = data.cloudsql-auditlog_audit_log_rules.example
+}
