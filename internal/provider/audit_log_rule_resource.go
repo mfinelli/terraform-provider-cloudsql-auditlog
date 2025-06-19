@@ -89,7 +89,29 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	q := db.New(r.client)
-	err := q.CreateAuditRule(ctx, db.CreateAuditRuleParams{
+	ruleIdCheck, err := q.ReadAuditRuleIDAfterCreate(ctx,
+		db.ReadAuditRuleIDAfterCreateParams{
+			Username: plan.Username.ValueString(),
+			Dbname: plan.DbName.ValueString(),
+			Object: plan.Object.ValueString(),
+			Operation: plan.Operation.ValueString(),
+			OpResult: plan.OpResult.ValueString(),
+		})
+	if err == nil {
+		resp.Diagnostics.AddError(
+			"Rule already exists",
+			fmt.Errorf("existing ID: %d", ruleIdCheck).Error(),
+		)
+		return
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		resp.Diagnostics.AddError(
+			"Unable to check rule existence",
+			err.Error(),
+		)
+		return
+	}
+	
+	err = q.CreateAuditRule(ctx, db.CreateAuditRuleParams{
 		Username: plan.Username.ValueString(),
 		Dbname: plan.DbName.ValueString(),
 		Object: plan.Object.ValueString(),
