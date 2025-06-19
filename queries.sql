@@ -14,3 +14,9 @@ SELECT id FROM audit_log_rules WHERE
 
 -- name: ReadAuditLogRuleByID :one
 SELECT * FROM audit_log_rules WHERE id = ?;
+
+-- name: UpdatedAuditRuleByID :exec
+CALL mysql.cloudsql_update_audit_rule(sqlc.arg(id), sqlc.arg(username), sqlc.arg(dbname), sqlc.arg(object), sqlc.arg(operation), sqlc.arg(op_result), 1, @outval, @outmsg);
+
+-- name: DeleteAuditRuleByID :exec
+CALL mysql.cloudsql_delete_audit_rule(sqlc.arg(id), 1, @outval, @outmsg);
