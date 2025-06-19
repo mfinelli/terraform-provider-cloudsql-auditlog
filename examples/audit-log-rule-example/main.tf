@@ -18,10 +18,23 @@ provider "cloudsql-auditlog" {
 #   value = data.cloudsql-auditlog_audit_log_rules.example
 # }
 
-resource "cloudsql-auditlog_audit_log_rule" "test" {
-  username = "`mario.finelli`@%"
+# resource "cloudsql-auditlog_audit_log_rule" "test" {
+#   username = "`mario.finelli`@%"
+#   dbname = "*"
+#   object = "*"
+#   operation = "*"
+#   op_result = "E"
+# }
+
+resource "cloudsql-auditlog_audit_log_rule" "test2" {
+  username = "*"
   dbname = "*"
   object = "*"
   operation = "*"
   op_result = "E"
 }
+
+# import {
+#   to = cloudsql-auditlog_audit_log_rule.test2
+#   id = "7"
+# }

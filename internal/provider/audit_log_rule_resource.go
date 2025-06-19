@@ -5,22 +5,25 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"terraform-provider-cloudsql-auditlog/db"
+
 	// "time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
 	_ resource.Resource = &auditLogRuleResource{}
 	_ resource.ResourceWithConfigure = &auditLogRuleResource{}
+	_ resource.ResourceWithImportState = &auditLogRuleResource{}
 )
 
 func NewAuditLogRuleResource() resource.Resource {
@@ -32,7 +35,7 @@ type auditLogRuleResource struct{
 }
 
 type auditLogRuleResourceModel struct {
-	ID types.Int64 `tfsdk:"id"`
+	ID types.String `tfsdk:"id"`
 	Username types.String `tfsdk:"username"`
 	DbName types.String `tfsdk:"dbname"`
 	Object types.String `tfsdk:"object"`
@@ -48,10 +51,10 @@ func (r *auditLogRuleResource) Metadata(_ context.Context, req resource.Metadata
 func (r *auditLogRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.Int64Attribute{
+			"id": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"username": schema.StringAttribute{
@@ -117,7 +120,7 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	plan.ID = types.Int64Value(ruleID)
+	plan.ID = types.StringValue(strconv.FormatInt(ruleID, 10))
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -135,11 +138,20 @@ func (r *auditLogRuleResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	q := db.New(r.client)
-	rule, err := q.ReadAuditLogRuleByID(ctx, state.ID.ValueInt64())
+	ruleID, err := strconv.Atoi(state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error converting id to int",
+			fmt.Sprintf("Could not convert rule with id %s: %s", state.ID.ValueString(), err.Error()),
+		)
+		return
+	}
+
+	rule, err := q.ReadAuditLogRuleByID(ctx, int64(ruleID))
 	if err != nil  && !errors.Is(err, sql.ErrNoRows) {
 		resp.Diagnostics.AddError(
 			"Error reading audit log rule",
-			fmt.Sprintf("Could not read rule with id %d: %s", state.ID.ValueInt64(), err.Error()),
+			fmt.Sprintf("Could not read rule with id %d: %s", state.ID.ValueString(), err.Error()),
 		)
 		return
 	}
@@ -168,7 +180,7 @@ func (r *auditLogRuleResource) Update(ctx context.Context, req resource.UpdateRe
 
 	q := db.New(r.client)
 	err := q.UpdatedAuditRuleByID(ctx, db.UpdatedAuditRuleByIDParams{
-		ID: plan.ID.ValueInt64(),
+		ID: plan.ID.ValueString(),
 		Username: plan.Username.ValueString(),
 		Dbname: plan.DbName.ValueString(),
 		Object: plan.Object.ValueString(),
@@ -201,7 +213,7 @@ func (r *auditLogRuleResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	q := db.New(r.client)
-	err := q.DeleteAuditRuleByID(ctx, state.ID.ValueInt64())
+	err := q.DeleteAuditRuleByID(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to call audit rule delete",
@@ -229,4 +241,8 @@ func (r *auditLogRuleResource) Configure(_ context.Context, req resource.Configu
 	}
 
 	r.client = client
+}
+
+func (r *auditLogRuleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
