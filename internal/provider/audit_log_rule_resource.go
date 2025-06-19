@@ -173,8 +173,12 @@ func (r *auditLogRuleResource) Read(ctx context.Context, req resource.ReadReques
 	if err != nil  && !errors.Is(err, sql.ErrNoRows) {
 		resp.Diagnostics.AddError(
 			"Error reading audit log rule",
-			fmt.Sprintf("Could not read rule with id %d: %s", state.ID.ValueString(), err.Error()),
+			fmt.Sprintf("Could not read rule with id %s: %s", state.ID.ValueString(), err.Error()),
 		)
+		return
+	} else if err != nil && errors.Is(err, sql.ErrNoRows) {
+		// Resource no longer exists, clear the state
+		resp.State.RemoveResource(ctx) // This is the key!
 		return
 	}
 
