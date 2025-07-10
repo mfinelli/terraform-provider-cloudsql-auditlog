@@ -12,17 +12,17 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-  _ datasource.DataSource = &auditLogRulesDataSource{}
-  _ datasource.DataSourceWithConfigure = &auditLogRulesDataSource{}
+	_ datasource.DataSource              = &auditLogRulesDataSource{}
+	_ datasource.DataSourceWithConfigure = &auditLogRulesDataSource{}
 )
 
 // NewCoffeesDataSource is a helper function to simplify the provider implementation.
 func NewAuditLogRulesDataSource() datasource.DataSource {
-  return &auditLogRulesDataSource{}
+	return &auditLogRulesDataSource{}
 }
 
 // coffeesDataSource is the data source implementation.
-type auditLogRulesDataSource struct{
+type auditLogRulesDataSource struct {
 	client CloudSqlClientAndConfig
 }
 
@@ -33,50 +33,50 @@ type auditLogRulesDataSourceModel struct {
 
 // coffeesModel maps coffees schema data.
 type auditLogRulesModel struct {
-	ID types.Int64 `tfsdk:"id"`
-	Username types.String `tfsdk:"username"`
-	DbName types.String `tfsdk:"dbname"`
-	Object types.String `tfsdk:"object"`
+	ID        types.Int64  `tfsdk:"id"`
+	Username  types.String `tfsdk:"username"`
+	DbName    types.String `tfsdk:"dbname"`
+	Object    types.String `tfsdk:"object"`
 	Operation types.String `tfsdk:"operation"`
-	OpResult types.String `tfsdk:"op_result"`
+	OpResult  types.String `tfsdk:"op_result"`
 }
 
 // Metadata returns the data source type name.
 func (d *auditLogRulesDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-  resp.TypeName = req.ProviderTypeName + "_audit_log_rules"
+	resp.TypeName = req.ProviderTypeName + "_audit_log_rules"
 }
 
 // Schema defines the schema for the data source.
 func (d *auditLogRulesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-  resp.Schema = schema.Schema{
-	  Attributes: map[string]schema.Attribute {
-		  "audit_log_rules": schema.ListNestedAttribute{
-			  Computed: true,
-			  NestedObject: schema.NestedAttributeObject{
-				  Attributes: map[string]schema.Attribute {
-					  "id": schema.Int64Attribute{
-						  Computed: true,
-					  },
-					  "username": schema.StringAttribute{
-						  Computed: true,
-					  },
-					  "dbname": schema.StringAttribute{
-						  Computed: true,
-					  },
-					  "object": schema.StringAttribute{
-						  Computed: true,
-					  },
-					  "operation": schema.StringAttribute{
-						  Computed: true,
-					  },
-					  "op_result": schema.StringAttribute{
-						  Computed: true,
-					  },
-				  },
-			  },
-		  },
-	  },
-  }
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"audit_log_rules": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.Int64Attribute{
+							Computed: true,
+						},
+						"username": schema.StringAttribute{
+							Computed: true,
+						},
+						"dbname": schema.StringAttribute{
+							Computed: true,
+						},
+						"object": schema.StringAttribute{
+							Computed: true,
+						},
+						"operation": schema.StringAttribute{
+							Computed: true,
+						},
+						"op_result": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 // Read refreshes the Terraform state with the latest data.
@@ -94,13 +94,13 @@ func (d *auditLogRulesDataSource) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	for _, rule := range rules {
-		ruleState := auditLogRulesModel {
-			ID: types.Int64Value(rule.ID),
-			Username: types.StringValue(rule.Username),
-			DbName: types.StringValue(rule.Dbname),
-			Object: types.StringValue(rule.Object),
+		ruleState := auditLogRulesModel{
+			ID:        types.Int64Value(rule.ID),
+			Username:  types.StringValue(rule.Username),
+			DbName:    types.StringValue(rule.Dbname),
+			Object:    types.StringValue(rule.Object),
 			Operation: types.StringValue(rule.Operation),
-			OpResult: types.StringValue(rule.OpResult),
+			OpResult:  types.StringValue(rule.OpResult),
 		}
 
 		state.AuditLogRules = append(state.AuditLogRules, ruleState)

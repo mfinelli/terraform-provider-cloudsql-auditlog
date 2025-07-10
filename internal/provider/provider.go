@@ -56,15 +56,15 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
 				Required: true,
-				Optional:            false,
+				Optional: false,
 			},
 			"username": schema.StringAttribute{
 				Required: true,
 				Optional: false,
 			},
 			"password": schema.StringAttribute{
-				Required: false,
-				Optional: true, // empty password allowed for e.g., cloud-sql-proxy
+				Required:  false,
+				Optional:  true, // empty password allowed for e.g., cloud-sql-proxy
 				Sensitive: true,
 			},
 			"engine": schema.StringAttribute{
@@ -118,7 +118,6 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -135,7 +134,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		username = data.Username.ValueString()
 	}
 
-	if ! data.Password.IsNull() {
+	if !data.Password.IsNull() {
 		password = data.Password.ValueString()
 	}
 
@@ -201,8 +200,7 @@ func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.R
 }
 
 func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
-	return []func() ephemeral.EphemeralResource{
-	}
+	return []func() ephemeral.EphemeralResource{}
 }
 
 func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -212,8 +210,7 @@ func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasour
 }
 
 func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.Function {
-	return []func() function.Function{
-	}
+	return []func() function.Function{}
 }
 
 func New(version string) func() provider.Provider {

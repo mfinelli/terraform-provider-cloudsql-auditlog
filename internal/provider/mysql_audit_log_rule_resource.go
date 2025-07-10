@@ -21,8 +21,8 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource = &auditLogRuleResource{}
-	_ resource.ResourceWithConfigure = &auditLogRuleResource{}
+	_ resource.Resource                = &auditLogRuleResource{}
+	_ resource.ResourceWithConfigure   = &auditLogRuleResource{}
 	_ resource.ResourceWithImportState = &auditLogRuleResource{}
 )
 
@@ -30,17 +30,17 @@ func NewAuditLogRuleResource() resource.Resource {
 	return &auditLogRuleResource{}
 }
 
-type auditLogRuleResource struct{
+type auditLogRuleResource struct {
 	client CloudSqlClientAndConfig
 }
 
 type auditLogRuleResourceModel struct {
-	ID types.String `tfsdk:"id"`
-	Username types.String `tfsdk:"username"`
-	DbName types.String `tfsdk:"dbname"`
-	Object types.String `tfsdk:"object"`
+	ID        types.String `tfsdk:"id"`
+	Username  types.String `tfsdk:"username"`
+	DbName    types.String `tfsdk:"dbname"`
+	Object    types.String `tfsdk:"object"`
 	Operation types.String `tfsdk:"operation"`
-	OpResult types.String `tfsdk:"op_result"`
+	OpResult  types.String `tfsdk:"op_result"`
 	// LastUpdated types.String `tfsdk:"last_updated"`
 }
 
@@ -91,11 +91,11 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 	q := db.New(r.client.client)
 	ruleIdCheck, err := q.ReadAuditRuleIDAfterCreate(ctx,
 		db.ReadAuditRuleIDAfterCreateParams{
-			Username: plan.Username.ValueString(),
-			Dbname: plan.DbName.ValueString(),
-			Object: plan.Object.ValueString(),
+			Username:  plan.Username.ValueString(),
+			Dbname:    plan.DbName.ValueString(),
+			Object:    plan.Object.ValueString(),
 			Operation: plan.Operation.ValueString(),
-			OpResult: plan.OpResult.ValueString(),
+			OpResult:  plan.OpResult.ValueString(),
 		})
 	if err == nil {
 		resp.Diagnostics.AddError(
@@ -112,11 +112,11 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	err = q.CreateAuditRule(ctx, db.CreateAuditRuleParams{
-		Username: plan.Username.ValueString(),
-		Dbname: plan.DbName.ValueString(),
-		Object: plan.Object.ValueString(),
+		Username:  plan.Username.ValueString(),
+		Dbname:    plan.DbName.ValueString(),
+		Object:    plan.Object.ValueString(),
 		Operation: plan.Operation.ValueString(),
-		OpResult: plan.OpResult.ValueString(),
+		OpResult:  plan.OpResult.ValueString(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -128,11 +128,11 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 
 	ruleID, err := q.ReadAuditRuleIDAfterCreate(ctx,
 		db.ReadAuditRuleIDAfterCreateParams{
-			Username: plan.Username.ValueString(),
-			Dbname: plan.DbName.ValueString(),
-			Object: plan.Object.ValueString(),
+			Username:  plan.Username.ValueString(),
+			Dbname:    plan.DbName.ValueString(),
+			Object:    plan.Object.ValueString(),
 			Operation: plan.Operation.ValueString(),
-			OpResult: plan.OpResult.ValueString(),
+			OpResult:  plan.OpResult.ValueString(),
 		})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -170,7 +170,7 @@ func (r *auditLogRuleResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	rule, err := q.ReadAuditLogRuleByID(ctx, int64(ruleID))
-	if err != nil  && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		resp.Diagnostics.AddError(
 			"Error reading audit log rule",
 			fmt.Sprintf("Could not read rule with id %s: %s", state.ID.ValueString(), err.Error()),
@@ -206,12 +206,12 @@ func (r *auditLogRuleResource) Update(ctx context.Context, req resource.UpdateRe
 
 	q := db.New(r.client.client)
 	err := q.UpdatedAuditRuleByID(ctx, db.UpdatedAuditRuleByIDParams{
-		ID: plan.ID.ValueString(),
-		Username: plan.Username.ValueString(),
-		Dbname: plan.DbName.ValueString(),
-		Object: plan.Object.ValueString(),
+		ID:        plan.ID.ValueString(),
+		Username:  plan.Username.ValueString(),
+		Dbname:    plan.DbName.ValueString(),
+		Object:    plan.Object.ValueString(),
 		Operation: plan.Operation.ValueString(),
-		OpResult: plan.OpResult.ValueString(),
+		OpResult:  plan.OpResult.ValueString(),
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
