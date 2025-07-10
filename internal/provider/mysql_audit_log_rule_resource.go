@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"terraform-provider-cloudsql-auditlog/db"
 
-	// "time"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
