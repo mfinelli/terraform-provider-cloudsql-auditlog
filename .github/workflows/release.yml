@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: sqlc-dev/setup-sqlc@v4
         with:
-          sqlc_version: 1.29.0
+          sqlc-version: 1.29.0
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           # Allow goreleaser to access older tag information.
