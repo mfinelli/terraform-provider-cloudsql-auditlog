@@ -1,3 +1,6 @@
+# Copyright (c) Mario Finelli
+# SPDX-License-Identifier: MPL-2.0
+
 ---
 version: "2"
 sql:

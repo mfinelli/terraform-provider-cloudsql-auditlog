@@ -1,3 +1,6 @@
+-- Copyright (c) Mario Finelli
+-- SPDX-License-Identifier: MPL-2.0
+
 -- name: GetAllAuditRules :many
 SELECT * FROM audit_log_rules;
 

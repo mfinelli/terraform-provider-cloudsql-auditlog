@@ -1,3 +1,6 @@
+-- Copyright (c) Mario Finelli
+-- SPDX-License-Identifier: MPL-2.0
+
 CREATE TABLE `audit_log_rules` (
 	  `id` bigint NOT NULL AUTO_INCREMENT,
 	  `username` varchar(2048) COLLATE utf8mb4_bin NOT NULL,
