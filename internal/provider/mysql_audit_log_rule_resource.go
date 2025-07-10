@@ -31,7 +31,7 @@ func NewAuditLogRuleResource() resource.Resource {
 }
 
 type auditLogRuleResource struct{
-	client *sql.DB
+	client CloudSqlClientAndConfig
 }
 
 type auditLogRuleResourceModel struct {
@@ -88,7 +88,7 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
-	q := db.New(r.client)
+	q := db.New(r.client.client)
 	ruleIdCheck, err := q.ReadAuditRuleIDAfterCreate(ctx,
 		db.ReadAuditRuleIDAfterCreateParams{
 			Username: plan.Username.ValueString(),
@@ -110,7 +110,7 @@ func (r *auditLogRuleResource) Create(ctx context.Context, req resource.CreateRe
 		)
 		return
 	}
-	
+
 	err = q.CreateAuditRule(ctx, db.CreateAuditRuleParams{
 		Username: plan.Username.ValueString(),
 		Dbname: plan.DbName.ValueString(),
@@ -159,7 +159,7 @@ func (r *auditLogRuleResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	q := db.New(r.client)
+	q := db.New(r.client.client)
 	ruleID, err := strconv.Atoi(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -204,7 +204,7 @@ func (r *auditLogRuleResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	q := db.New(r.client)
+	q := db.New(r.client.client)
 	err := q.UpdatedAuditRuleByID(ctx, db.UpdatedAuditRuleByIDParams{
 		ID: plan.ID.ValueString(),
 		Username: plan.Username.ValueString(),
@@ -238,7 +238,7 @@ func (r *auditLogRuleResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	q := db.New(r.client)
+	q := db.New(r.client.client)
 	err := q.DeleteAuditRuleByID(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -256,11 +256,20 @@ func (r *auditLogRuleResource) Configure(_ context.Context, req resource.Configu
 		return
 	}
 
-	client, ok := req.ProviderData.(*sql.DB)
+	client, ok := req.ProviderData.(CloudSqlClientAndConfig)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
 			fmt.Sprintf("Expected *sql.DB got %T.", req.ProviderData),
+		)
+
+		return
+	}
+
+	if client.engine != "mysql" {
+		resp.Diagnostics.AddError(
+			"Must use mysql engine for mysql types",
+			fmt.Sprintf("Configured engine is %q", client.engine),
 		)
 
 		return

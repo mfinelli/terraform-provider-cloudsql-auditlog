@@ -10,6 +10,7 @@ provider "cloudsql-auditlog" {
   endpoint = "127.0.0.1"
   password = ""
   username = "mario.finelli"
+  engine   = "mysql"
 }
 
 # data "cloudsql-auditlog_audit_log_rules" "example" {}
@@ -27,9 +28,9 @@ provider "cloudsql-auditlog" {
 # }
 
 resource "cloudsql-auditlog_audit_log_rule" "test2" {
-  username = "*"
-  dbname = "*"
-  object = "*"
+  username  = "*"
+  dbname    = "*"
+  object    = "*"
   operation = "*"
   op_result = "E"
 }

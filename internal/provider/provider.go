@@ -38,6 +38,12 @@ type cloudsqlAuditlogProviderModel struct {
 	Endpoint types.String `tfsdk:"endpoint"`
 	Username types.String `tfsdk:"username"`
 	Password types.String `tfsdk:"password"`
+	Engine   types.String `tfsdk:"engine"`
+}
+
+type CloudSqlClientAndConfig struct {
+	client *sql.DB
+	engine string
 }
 
 func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -58,8 +64,12 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 			},
 			"password": schema.StringAttribute{
 				Required: false,
-				Optional: true,
+				Optional: true, // empty password allowed for e.g., cloud-sql-proxy
 				Sensitive: true,
+			},
+			"engine": schema.StringAttribute{
+				Required: true,
+				Optional: false,
 			},
 		},
 	}
@@ -75,7 +85,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
+
 	if data.Endpoint.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("endpoint"),
@@ -99,6 +109,15 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 			"Must set mysql password",
 		)
 	}
+
+	if data.Engine.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("engine"),
+			"Unknown engine",
+			"Must set engine type",
+		)
+	}
+
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -136,31 +155,43 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
-	// if password == "" {
-	// 	resp.Diagnostics.AddAttributeError(
-	// 		path.Root("password"),
-	// 		"Missing mysql password",
-	// 		"Must set mysql password",
-	// 	)
-	// }
+	if data.Engine.ValueString() != "mysql" && data.Engine.ValueString() != "postgresql" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("engine"),
+			"Invalid engine",
+			fmt.Sprintf("Invalid engine type %q, allowed values: mysql, postgresql", data.Engine.ValueString()),
+		)
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Example client configuration for data sources and resources
-	// client := http.DefaultClient
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, password, endpoint)
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
+	if data.Engine.ValueString() == "mysql" {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, password, endpoint)
+		db, err := sql.Open("mysql", dsn)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				fmt.Sprintf("unable to open mysql: %v", err),
+				"Unable to call sql.open",
+			)
+			return
+		}
+
+		clientEngine := CloudSqlClientAndConfig{
+			client: db,
+			engine: data.Engine.ValueString(),
+		}
+
+		resp.DataSourceData = clientEngine
+		resp.ResourceData = clientEngine
+	} else {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("unable to open mysql: %v", err),
-			"Unable to call sql.open",
+			"TODO",
+			"postgresql not implemented yet",
 		)
 		return
 	}
-	resp.DataSourceData = db
-	resp.ResourceData = db
 }
 
 func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -171,7 +202,6 @@ func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.R
 
 func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
-		NewExampleEphemeralResource,
 	}
 }
 
@@ -183,7 +213,6 @@ func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasour
 
 func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
-		NewExampleFunction,
 	}
 }
 

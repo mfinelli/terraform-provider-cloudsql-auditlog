@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"terraform-provider-cloudsql-auditlog/db"
 
@@ -24,7 +23,7 @@ func NewAuditLogRulesDataSource() datasource.DataSource {
 
 // coffeesDataSource is the data source implementation.
 type auditLogRulesDataSource struct{
-	client *sql.DB
+	client CloudSqlClientAndConfig
 }
 
 // coffeesDataSourceModel maps the data source schema data.
@@ -84,7 +83,7 @@ func (d *auditLogRulesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 func (d *auditLogRulesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state auditLogRulesDataSourceModel
 
-	q := db.New(d.client)
+	q := db.New(d.client.client)
 	rules, err := q.GetAllAuditRules(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -122,11 +121,20 @@ func (d *auditLogRulesDataSource) Configure(_ context.Context, req datasource.Co
 		return
 	}
 
-	client, ok := req.ProviderData.(*sql.DB)
+	client, ok := req.ProviderData.(CloudSqlClientAndConfig)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
 			fmt.Sprintf("Expected *sql.DB got %T.", req.ProviderData),
+		)
+
+		return
+	}
+
+	if client.engine != "mysql" {
+		resp.Diagnostics.AddError(
+			"Must use mysql engine for mysql types",
+			fmt.Sprintf("Configured engine is %q", client.engine),
 		)
 
 		return
