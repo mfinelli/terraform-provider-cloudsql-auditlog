@@ -24,3 +24,4 @@ description: |-
 ### Optional
 
 - `password` (String, Sensitive)
+- `tls` (String)
