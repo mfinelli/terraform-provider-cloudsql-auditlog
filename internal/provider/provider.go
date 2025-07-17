@@ -40,6 +40,7 @@ type cloudsqlAuditlogProviderModel struct {
 	Username types.String `tfsdk:"username"`
 	Password types.String `tfsdk:"password"`
 	Engine   types.String `tfsdk:"engine"`
+	Tls      types.String `tfsdk:"tls"`
 }
 
 type CloudSqlClientAndConfig struct {
@@ -71,6 +72,10 @@ func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaReq
 			"engine": schema.StringAttribute{
 				Required: true,
 				Optional: false,
+			},
+			"tls": schema.StringAttribute{
+				Required: false,
+				Optional: true,
 			},
 		},
 	}
@@ -119,6 +124,14 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
+	if data.Tls.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("tls"),
+			"Unknown tls",
+			"Must set tls option",
+		)
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -126,6 +139,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	endpoint := ""
 	username := ""
 	password := ""
+	tls := "false"
 
 	if !data.Endpoint.IsNull() {
 		endpoint = data.Endpoint.ValueString()
@@ -137,6 +151,10 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 
 	if !data.Password.IsNull() {
 		password = data.Password.ValueString()
+	}
+
+	if !data.Tls.IsNull() {
+		tls = data.Tls.ValueString()
 	}
 
 	if endpoint == "" {
@@ -168,7 +186,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	if data.Engine.ValueString() == "mysql" {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, url.QueryEscape(password), endpoint)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?tls=%s", username, url.QueryEscape(password), endpoint, tls)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			resp.Diagnostics.AddError(
