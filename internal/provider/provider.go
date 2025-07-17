@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/url"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -186,16 +186,25 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	if data.Engine.ValueString() == "mysql" {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql?tls=%s", username, url.QueryEscape(password), endpoint, tls)
-		db, err := sql.Open("mysql", dsn)
+		cfg := mysql.NewConfig()
+
+		cfg.User = username
+		cfg.Passwd = password
+		cfg.Net = "tcp"
+		cfg.Addr = endpoint
+		cfg.DBName = "mysql"
+		cfg.TLSConfig = tls
+
+		conn, err := mysql.NewConnector(cfg)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				fmt.Sprintf("unable to open mysql: %v", err),
-				"Unable to call sql.open",
+				fmt.Sprintf("unable to parse connection options: %v", err),
+				"Unable to call mysql new connector",
 			)
 			return
 		}
 
+		db := sql.OpenDB(conn)
 		clientEngine := CloudSqlClientAndConfig{
 			client: db,
 			engine: data.Engine.ValueString(),
