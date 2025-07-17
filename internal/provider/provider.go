@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"net/url"
 
 	"github.com/go-sql-driver/mysql"
 
