@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -167,7 +168,7 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	if data.Engine.ValueString() == "mysql" {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, password, endpoint)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/mysql", username, url.QueryEscape(password), endpoint)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			resp.Diagnostics.AddError(
